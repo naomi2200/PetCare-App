@@ -1,2 +1,9 @@
-package com.petcare.app.screens.auth
+package com.petcare.app.screens.auth.login
 
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+
+@Composable
+fun LoginScreen() {
+    Text("Login Screen")
+}
