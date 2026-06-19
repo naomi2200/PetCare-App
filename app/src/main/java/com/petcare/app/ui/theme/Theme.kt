@@ -11,33 +11,33 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
+// 🎨 Mapeo oficial de tu paleta PetCare en Modo Oscuro
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = PrimaryPurple,     // ✅ Resuelto
+    secondary = PrimaryPink,     // ✅ Resuelto
+    tertiary = SuccessMint,      // ✅ Resuelto
+    background = TextPrimary,    // Inversión semántica para dark mode
+    surface = TextPrimary
 )
 
+// 🎨 Mapeo oficial de tu paleta PetCare en Modo Claro (Según tu UI de Login/Register)
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = PrimaryPurple,     // ✅ Resuelto
+    secondary = PrimaryPink,     // ✅ Resuelto
+    tertiary = SuccessMint,      // ✅ Resuelto
+    background = Background,     // ✅ Resuelto
+    surface = Surface,           // ✅ Resuelto
+    onPrimary = Surface,
+    onSecondary = Surface,
+    onBackground = TextPrimary,  // ✅ Resuelto
+    onSurface = TextPrimary      // ✅ Resuelto
 )
 
 @Composable
 fun PetCareTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // 💡 Consejo técnico: Ponlo en 'false' para forzar que tu app use tus colores PetCare reales y no los del sistema del teléfono
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -52,7 +52,7 @@ fun PetCareTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = Typography, // Asegúrate de que tu archivo 'Type.kt' use 'Typography' sin errores
         content = content
     )
 }
