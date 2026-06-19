@@ -19,6 +19,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +43,7 @@ import com.petcare.app.ui.theme.PrimaryPink
 import com.petcare.app.ui.theme.PrimaryPurple
 import com.petcare.app.ui.theme.TextPrimary
 import com.petcare.app.ui.theme.TextSecondary
+import com.petcare.app.viewmodel.AuthViewModel
 
 @Composable
 fun RegisterScreen(
@@ -52,13 +55,23 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var localError by remember { mutableStateOf<String?>(null) }
+
+    val authViewModel: AuthViewModel = viewModel()
+    val uiState by authViewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            onRegisterSuccess()
+            authViewModel.resetState()
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Background)
     ) {
-        // 🌊 FOOTER: Ola rosa de registro (Respetando navigation bars)
         PetCareWaveFooter(
             drawableResId = R.drawable.footer_wave_register,
             modifier = Modifier
@@ -77,14 +90,12 @@ fun RegisterScreen(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 🎯 LOGO (90dp - Protagonista)
             PetCareLogo(
                 modifier = Modifier.height(90.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 🎯 TÍTULO
             Text(
                 text = "Crea tu cuenta",
                 fontSize = 18.sp,
@@ -95,12 +106,10 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 🎯 AVATAR Y BOTÓN CÁMARA
             Box(
                 modifier = Modifier.size(140.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // Círculo suave color lila de fondo
                 Box(
                     modifier = Modifier
                         .size(130.dp)
@@ -108,14 +117,12 @@ fun RegisterScreen(
                         .background(PrimaryPurple.copy(alpha = 0.12f))
                 )
 
-                // Mascota de registro (pet_register.webp)
                 Image(
                     painter = painterResource(id = R.drawable.pet_register),
                     contentDescription = "PetCare Register Mascot",
                     modifier = Modifier.size(115.dp)
                 )
 
-                // Botón cámara superpuesto (Inferior derecha)
                 Surface(
                     modifier = Modifier
                         .size(44.dp)
@@ -138,21 +145,26 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(22.dp))
 
-            // 🎯 FORMULARIO DE REGISTRO
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 PetCareTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = {
+                        name = it
+                        localError = null
+                    },
                     label = "Nombre completo",
                     leadingIcon = Icons.Default.Person
                 )
 
                 PetCareTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = {
+                        email = it
+                        localError = null
+                    },
                     label = "Correo electrónico",
                     leadingIcon = Icons.Default.Email,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
@@ -160,7 +172,10 @@ fun RegisterScreen(
 
                 PetCareTextField(
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = {
+                        password = it
+                        localError = null
+                    },
                     label = "Contraseña",
                     leadingIcon = Icons.Default.Lock,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -175,7 +190,10 @@ fun RegisterScreen(
 
                 PetCareTextField(
                     value = confirmPassword,
-                    onValueChange = { confirmPassword = it },
+                    onValueChange = {
+                        confirmPassword = it
+                        localError = null
+                    },
                     label = "Confirmar contraseña",
                     leadingIcon = Icons.Default.Lock,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -185,17 +203,40 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // 🎯 BOTÓN REGISTRARME (Color PrimaryPink)
             PetCareButton(
-                text = "Registrarme",
-                onClick = onRegisterSuccess,
+                text = if (uiState.isLoading) "Registrando..." else "Registrarme",
+                onClick = {
+                    if (password != confirmPassword) {
+                        localError = "Las contraseñas no coinciden."
+                    } else {
+                        localError = null
+                        authViewModel.register(name, email, password)
+                    }
+                },
                 containerColor = PrimaryPink,
                 modifier = Modifier.fillMaxWidth()
             )
 
+            localError?.let { error ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            uiState.errorMessage?.let { error ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
+            }
+
             Spacer(modifier = Modifier.height(18.dp))
 
-            // 🎯 TEXTO INICIAR SESIÓN
             Row(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -214,7 +255,6 @@ fun RegisterScreen(
                 )
             }
 
-            // 🎯 COLCHÓN DE SEGURIDAD PARA LA OLA
             Spacer(modifier = Modifier.height(120.dp))
         }
     }

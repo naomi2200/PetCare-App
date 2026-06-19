@@ -24,7 +24,11 @@ fun AppNavigation() {
         composable(Screen.Register.route) {
             RegisterScreen(
                 onLoginClick = { navController.popBackStack() },
-                onRegisterSuccess = { /* Acción futura de registro exitoso */ }
+                onRegisterSuccess = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
+                }
             )
         }
     }
