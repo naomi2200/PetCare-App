@@ -3,16 +3,7 @@ package com.petcare.app.screens.auth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -25,13 +16,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -64,62 +54,92 @@ fun LoginScreen(
             .fillMaxSize()
             .background(Background)
     ) {
-        // 🌊 Fondo decorativo anclado abajo sin interferir en el flujo de la columna
+        // 🌊 FOOTER: Visible y anclado al final, respetando la barra de navegación
         PetCareWaveFooter(
             drawableResId = R.drawable.footer_wave_login,
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
         )
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 28.dp)
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 🎯 Aire inicial balanceado para el Notch/Status Bar
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
-            // 🎯 1. LOGO: Mediano y con la presencia solicitada (Rango 65dp - 75dp)
+            // 🎯 LOGO (80dp - Sin cambios)
             PetCareLogo(
-                modifier = Modifier.height(70.dp)
+                modifier = Modifier.height(80.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // 🎯 2. TEXTOS DE BIENVENIDA (Espaciado natural, no aplastado)
+            // 🎯 TÍTULO (Reducido a 28sp para ajuste de jerarquía)
             Text(
                 text = "¡Bienvenido de vuelta!",
-                style = MaterialTheme.typography.headlineMedium,
-                color = TextPrimary
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
-
+            // 🎯 SUBTÍTULO
             Text(
                 text = "Inicia sesión para continuar",
-                style = MaterialTheme.typography.titleMedium,
+                fontSize = 16.sp,
                 color = TextSecondary,
                 textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 🎯 3. MASCOTA: Recupera su protagonismo visual absoluto (Fijado en 170dp)
-            Image(
-                painter = painterResource(id = R.drawable.pet_login),
-                contentDescription = "PetCare Login Mascot",
-                modifier = Modifier.size(170.dp)
-            )
+            // 🎯 MASCOTA Y HUELLITAS DECORATIVAS
+            Box(
+                modifier = Modifier
+                    .height(200.dp)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                // Mascota principal (180dp - Sin cambios)
+                Image(
+                    painter = painterResource(id = R.drawable.pet_login),
+                    contentDescription = "PetCare Login Mascot",
+                    modifier = Modifier.size(180.dp)
+                )
 
-            Spacer(modifier = Modifier.height(24.dp))
+                // Huella superior (Opacidad aumentada a 0.40f)
+                Image(
+                    painter = painterResource(id = R.drawable.paw_background),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .offset(x = 115.dp, y = (-50).dp)
+                        .size(36.dp)
+                        .alpha(0.50f)
+                )
 
-            // 🎯 4. FORMULARIO CÓMODO
+                // Huella inferior (Opacidad aumentada a 0.35f)
+                Image(
+                    painter = painterResource(id = R.drawable.paw_background),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .offset(x = 145.dp, y = 15.dp)
+                        .size(28.dp)
+                        .alpha(0.50f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 🎯 CAMPOS FORMULARIO
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 PetCareTextField(
                     value = email,
@@ -147,17 +167,18 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 🎯 5. RECUPERACIÓN DE CONTRASEÑA
+            // 🎯 ENLACE RECUPERAR CONTRASEÑA
             Text(
                 text = "¿Olvidaste tu contraseña?",
                 color = PrimaryPurple,
                 style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.clickable { /* No-op */ }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 🎯 6. BOTÓN PRINCIPAL
+            // 🎯 BOTÓN INICIAR SESIÓN
             PetCareButton(
                 text = "Iniciar sesión",
                 onClick = onLoginSuccess,
@@ -165,14 +186,18 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // 🎯 7. TEXTO REGÍSTRATE
+            // 🎯 TEXTO REGISTRARSE
             Row(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "¿No tienes cuenta? ", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = "¿No tienes cuenta? ",
+                    color = TextSecondary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
                 Text(
                     text = "Regístrate",
                     color = PrimaryPurple,
@@ -182,8 +207,10 @@ fun LoginScreen(
                 )
             }
 
-            // 🎯 Colchón de seguridad para que la ola respire en cualquier pantalla
-            Spacer(modifier = Modifier.height(48.dp))
+            // 🎯 ESPACIADO FINAL AUMENTADO (160dp)
+            // Esto empuja el texto hacia arriba, creando el espacio libre solicitado
+            // antes de que comience la ola del footer.
+            Spacer(modifier = Modifier.height(160.dp))
         }
     }
 }
