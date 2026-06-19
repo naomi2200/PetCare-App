@@ -7,16 +7,12 @@ plugins {
 
 android {
     namespace = "com.petcare.app"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.petcare.app"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -60,6 +56,8 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.kotlinx.coroutines.play.services)
+
+    implementation("androidx.compose.material:material-icons-extended")
 
     implementation(libs.coil.compose)
     testImplementation(libs.junit)

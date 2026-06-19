@@ -19,6 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -39,6 +41,7 @@ import com.petcare.app.ui.theme.Background
 import com.petcare.app.ui.theme.PrimaryPurple
 import com.petcare.app.ui.theme.TextPrimary
 import com.petcare.app.ui.theme.TextSecondary
+import com.petcare.app.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
@@ -49,12 +52,21 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
+    val authViewModel: AuthViewModel = viewModel()
+    val uiState by authViewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            onLoginSuccess()
+            authViewModel.resetState()
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Background)
     ) {
-        // 🌊 FOOTER: Visible y anclado al final, respetando la barra de navegación
         PetCareWaveFooter(
             drawableResId = R.drawable.footer_wave_login,
             modifier = Modifier
@@ -73,14 +85,12 @@ fun LoginScreen(
         ) {
             Spacer(modifier = Modifier.height(30.dp))
 
-            // 🎯 LOGO (80dp - Sin cambios)
             PetCareLogo(
                 modifier = Modifier.height(80.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 🎯 TÍTULO (Reducido a 28sp para ajuste de jerarquía)
             Text(
                 text = "¡Bienvenido de vuelta!",
                 fontSize = 28.sp,
@@ -89,7 +99,6 @@ fun LoginScreen(
                 textAlign = TextAlign.Center
             )
 
-            // 🎯 SUBTÍTULO
             Text(
                 text = "Inicia sesión para continuar",
                 fontSize = 16.sp,
@@ -99,21 +108,18 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 🎯 MASCOTA Y HUELLITAS DECORATIVAS
             Box(
                 modifier = Modifier
                     .height(200.dp)
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                // Mascota principal (180dp - Sin cambios)
                 Image(
                     painter = painterResource(id = R.drawable.pet_login),
                     contentDescription = "PetCare Login Mascot",
                     modifier = Modifier.size(180.dp)
                 )
 
-                // Huella superior (Opacidad aumentada a 0.40f)
                 Image(
                     painter = painterResource(id = R.drawable.paw_background),
                     contentDescription = null,
@@ -123,7 +129,6 @@ fun LoginScreen(
                         .alpha(0.50f)
                 )
 
-                // Huella inferior (Opacidad aumentada a 0.35f)
                 Image(
                     painter = painterResource(id = R.drawable.paw_background),
                     contentDescription = null,
@@ -136,7 +141,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 🎯 CAMPOS FORMULARIO
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -167,28 +171,34 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 🎯 ENLACE RECUPERAR CONTRASEÑA
             Text(
                 text = "¿Olvidaste tu contraseña?",
                 color = PrimaryPurple,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                modifier = Modifier.clickable { /* No-op */ }
+                modifier = Modifier.clickable { }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 🎯 BOTÓN INICIAR SESIÓN
             PetCareButton(
-                text = "Iniciar sesión",
-                onClick = onLoginSuccess,
+                text = if (uiState.isLoading) "Ingresando..." else "Iniciar sesión",
+                onClick = { authViewModel.login(email, password) },
                 containerColor = PrimaryPurple,
                 modifier = Modifier.fillMaxWidth()
             )
 
+            uiState.errorMessage?.let { error ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = error,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 🎯 TEXTO REGISTRARSE
             Row(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -207,9 +217,6 @@ fun LoginScreen(
                 )
             }
 
-            // 🎯 ESPACIADO FINAL AUMENTADO (160dp)
-            // Esto empuja el texto hacia arriba, creando el espacio libre solicitado
-            // antes de que comience la ola del footer.
             Spacer(modifier = Modifier.height(160.dp))
         }
     }
