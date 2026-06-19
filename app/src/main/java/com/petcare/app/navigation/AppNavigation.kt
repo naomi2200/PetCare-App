@@ -4,30 +4,28 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.petcare.app.screens.auth.login.LoginScreen
-import com.petcare.app.screens.auth.register.RegisterScreen
-import com.petcare.app.screens.dashboard.DashboardScreen
+import com.petcare.app.screens.auth.LoginScreen
+import com.petcare.app.screens.auth.RegisterScreen
 
 @Composable
 fun AppNavigation() {
-
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
         startDestination = Screen.Login.route
     ) {
-
         composable(Screen.Login.route) {
-            LoginScreen()
+            LoginScreen(
+                onRegisterClick = { navController.navigate(Screen.Register.route) },
+                onLoginSuccess = { /* Navegación futura al Dashboard */ }
+            )
         }
-
         composable(Screen.Register.route) {
-            RegisterScreen()
-        }
-
-        composable(Screen.Dashboard.route) {
-            DashboardScreen()
+            RegisterScreen(
+                onLoginClick = { navController.popBackStack() },
+                onRegisterSuccess = { /* Acción futura de registro exitoso */ }
+            )
         }
     }
 }
