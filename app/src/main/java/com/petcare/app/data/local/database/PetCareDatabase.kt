@@ -4,17 +4,23 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.petcare.app.data.local.dao.MedicalRecordDao
 import com.petcare.app.data.local.dao.PetDao
+import com.petcare.app.data.local.entity.MedicalRecordEntity
 import com.petcare.app.data.local.entity.PetEntity
 
 @Database(
-    entities = [PetEntity::class],
-    version = 1,
+    entities = [
+        PetEntity::class,
+        MedicalRecordEntity::class
+    ],
+    version = 2,
     exportSchema = false
 )
 abstract class PetCareDatabase : RoomDatabase() {
 
     abstract fun petDao(): PetDao
+    abstract fun medicalRecordDao(): MedicalRecordDao
 
     companion object {
         @Volatile
@@ -26,7 +32,9 @@ abstract class PetCareDatabase : RoomDatabase() {
                     context.applicationContext,
                     PetCareDatabase::class.java,
                     "petcare_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
 
                 INSTANCE = instance
                 instance
