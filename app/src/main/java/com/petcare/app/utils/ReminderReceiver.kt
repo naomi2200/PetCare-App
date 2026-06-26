@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.petcare.app.R
@@ -16,8 +17,8 @@ class ReminderReceiver : BroadcastReceiver() {
         val title = intent.getStringExtra("title") ?: "Recordatorio PetCare"
         val description = intent.getStringExtra("description") ?: "Tienes un recordatorio pendiente."
 
-        if (
-            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+        // Verificación de permiso en runtime para Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.POST_NOTIFICATIONS
@@ -27,14 +28,17 @@ class ReminderReceiver : BroadcastReceiver() {
         }
 
         val notification = NotificationCompat.Builder(context, NotificationHelper.CHANNEL_ID)
+            // Recomiendo usar ic_launcher_foreground o un icono de campana que tengas
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(description)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL) // Sonido y vibración por defecto
             .setAutoCancel(true)
             .build()
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        // Usamos un ID único para que múltiples notificaciones no se sobrescriban
         manager.notify(System.currentTimeMillis().toInt(), notification)
     }
 }

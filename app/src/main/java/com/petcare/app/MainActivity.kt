@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.petcare.app.navigation.AppNavigation
+import com.petcare.app.screens.auth.RegisterScreen
+import com.petcare.app.screens.profile.ProfileScreen
 import com.petcare.app.ui.theme.PetCareTheme
 import com.petcare.app.utils.NotificationHelper
 
@@ -18,7 +20,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             PetCareTheme {
-                AppNavigation()
+                ProfileScreen()
             }
         }
     }

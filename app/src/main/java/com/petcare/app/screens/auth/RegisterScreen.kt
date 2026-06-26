@@ -1,15 +1,13 @@
 package com.petcare.app.screens.auth
 
-import androidx.compose.foundation.Image
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -19,13 +17,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -35,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.petcare.app.R
 import com.petcare.app.components.PetCareButton
+import com.petcare.app.components.PetCareImagePicker
 import com.petcare.app.components.PetCareLogo
 import com.petcare.app.components.PetCareTextField
 import com.petcare.app.components.PetCareWaveFooter
@@ -56,6 +51,9 @@ fun RegisterScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
+
+    // Nuevo estado para la imagen de perfil
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
 
     val authViewModel: AuthViewModel = viewModel()
     val uiState by authViewModel.uiState.collectAsState()
@@ -106,42 +104,12 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Box(
-                modifier = Modifier.size(140.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(130.dp)
-                        .clip(CircleShape)
-                        .background(PrimaryPurple.copy(alpha = 0.12f))
-                )
-
-                Image(
-                    painter = painterResource(id = R.drawable.pet_register),
-                    contentDescription = "PetCare Register Mascot",
-                    modifier = Modifier.size(115.dp)
-                )
-
-                Surface(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .align(Alignment.BottomEnd)
-                        .offset(x = (-4).dp, y = (-4).dp),
-                    shape = CircleShape,
-                    color = PrimaryPurple,
-                    shadowElevation = 2.dp
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.CameraAlt,
-                            contentDescription = "Cambiar foto",
-                            tint = Color.White,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                }
-            }
+            // Integración del componente PetCareImagePicker funcional
+            PetCareImagePicker(
+                imageUri = imageUri,
+                onImageSelected = { uri -> imageUri = uri },
+                size = 130.dp
+            )
 
             Spacer(modifier = Modifier.height(22.dp))
 
@@ -208,8 +176,12 @@ fun RegisterScreen(
                 onClick = {
                     if (password != confirmPassword) {
                         localError = "Las contraseñas no coinciden."
+                    } else if (name.isBlank() || email.isBlank() || password.isBlank()) {
+                        localError = "Por favor, completa todos los campos."
                     } else {
                         localError = null
+                        // Nota: El authViewModel actualmente no recibe la imagen,
+                        // pero la lógica queda preparada para enviarla a Firebase más adelante.
                         authViewModel.register(name, email, password)
                     }
                 },
