@@ -4,6 +4,7 @@ import android.app.Application
 import com.petcare.app.data.local.database.PetCareDatabase
 import com.petcare.app.data.repository.PetRepository
 import com.petcare.app.data.repository.MedicalRepository
+import com.petcare.app.data.repository.WeightRepository
 
 class PetCareApplication : Application() {
 
@@ -17,5 +18,9 @@ class PetCareApplication : Application() {
 
     val medicalRepository by lazy {
         MedicalRepository(database.medicalRecordDao())
+    }
+
+    val weightRepository by lazy {
+        WeightRepository(database.weightEntryDao())
     }
 }
