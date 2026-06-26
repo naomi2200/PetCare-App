@@ -7,17 +7,20 @@ import androidx.room.RoomDatabase
 import com.petcare.app.data.local.dao.MedicalRecordDao
 import com.petcare.app.data.local.dao.PetDao
 import com.petcare.app.data.local.dao.WeightEntryDao
+import com.petcare.app.data.local.dao.ReminderDao
 import com.petcare.app.data.local.entity.MedicalRecordEntity
 import com.petcare.app.data.local.entity.PetEntity
 import com.petcare.app.data.local.entity.WeightEntryEntity
+import com.petcare.app.data.local.entity.ReminderEntity
 
 @Database(
     entities = [
         PetEntity::class,
         MedicalRecordEntity::class,
-        WeightEntryEntity::class
+        WeightEntryEntity::class,
+        ReminderEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class PetCareDatabase : RoomDatabase() {
@@ -26,6 +29,8 @@ abstract class PetCareDatabase : RoomDatabase() {
     abstract fun medicalRecordDao(): MedicalRecordDao
 
     abstract fun weightEntryDao(): WeightEntryDao
+
+    abstract fun reminderDao(): ReminderDao
 
     companion object {
         @Volatile

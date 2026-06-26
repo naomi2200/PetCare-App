@@ -5,6 +5,7 @@ import com.petcare.app.data.local.database.PetCareDatabase
 import com.petcare.app.data.repository.PetRepository
 import com.petcare.app.data.repository.MedicalRepository
 import com.petcare.app.data.repository.WeightRepository
+import com.petcare.app.data.repository.ReminderRepository
 
 class PetCareApplication : Application() {
 
@@ -22,5 +23,9 @@ class PetCareApplication : Application() {
 
     val weightRepository by lazy {
         WeightRepository(database.weightEntryDao())
+    }
+
+    val reminderRepository by lazy {
+        ReminderRepository(database.reminderDao())
     }
 }
