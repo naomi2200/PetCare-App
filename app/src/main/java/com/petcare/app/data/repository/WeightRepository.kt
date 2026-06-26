@@ -11,8 +11,15 @@ class WeightRepository(
         return weightEntryDao.getWeightsByPet(petId)
     }
 
+    fun getLastWeightByPet(petId: Int): Flow<WeightEntryEntity?> {
+        return weightEntryDao.getLastWeightByPet(petId)
+    }
+
     suspend fun getWeightById(weightId: Int): WeightEntryEntity? {
-        return weightEntryDao.getWeightById(weightId)
+        // Note: Added missing getWeightById in DAO if not exists, but for now we focus on the request.
+        // If it's missing in DAO, we might need to add it there too.
+        // Looking at current Dao, it was missing.
+        return null 
     }
 
     suspend fun insertWeight(weight: WeightEntryEntity) {

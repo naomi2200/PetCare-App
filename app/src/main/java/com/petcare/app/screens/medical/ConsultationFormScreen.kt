@@ -7,12 +7,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,33 +17,48 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.petcare.app.components.PetCareButton
+import com.petcare.app.components.PetCareDatePickerField
+import com.petcare.app.data.local.entity.MedicalRecordEntity
 import com.petcare.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConsultationFormScreen(
-    isEdit: Boolean = false,
-    onBack: () -> Unit = {}
+    petId: Int,
+    existingRecord: MedicalRecordEntity? = null,
+    onBack: () -> Unit,
+    onSave: (MedicalRecordEntity) -> Unit
 ) {
-    var reason by remember { mutableStateOf("") }
-    var vet by remember { mutableStateOf("") }
-    var diagnosis by remember { mutableStateOf("") }
-    var treatment by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }
-    var observations by remember { mutableStateOf("") }
+    val isEditing = existingRecord != null
+    
+    // Al editar, intentamos parsear la descripción estructurada
+    val initialDescription = existingRecord?.description ?: ""
+    val parts = initialDescription.split("\n")
+    val initialDiagnosis = parts.find { it.startsWith("Dx: ") }?.removePrefix("Dx: ") ?: initialDescription
+    val initialTreatment = parts.find { it.startsWith("Tratamiento: ") }?.removePrefix("Tratamiento: ") ?: ""
+    val initialObs = parts.find { it.startsWith("Obs: ") }?.removePrefix("Obs: ") ?: ""
+
+    var reason by remember { mutableStateOf(existingRecord?.title ?: "") }
+    var vet by remember { mutableStateOf(existingRecord?.veterinarian ?: "") }
+    var diagnosis by remember { mutableStateOf(initialDiagnosis) }
+    var treatment by remember { mutableStateOf(initialTreatment) }
+    var date by remember { mutableStateOf(existingRecord?.date ?: "") }
+    var observations by remember { mutableStateOf(initialObs) }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(if (isEdit) "Editar consulta" else "Agregar consulta", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary) },
+                title = { 
+                    Text(
+                        text = if (isEditing) "Editar consulta" else "Nueva consulta", 
+                        fontWeight = FontWeight.Bold, 
+                        fontSize = 18.sp, 
+                        color = TextPrimary
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null, tint = TextPrimary)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Close, contentDescription = null, tint = TextPrimary)
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Atrás", tint = TextPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Background)
@@ -62,11 +74,10 @@ fun ConsultationFormScreen(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Icono Central Estilo PetCare
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .background(Color(0xFFFFEEF0), RoundedCornerShape(24.dp)), // Rosa muy suave
+                    .background(Color(0xFFFFEEF0), RoundedCornerShape(24.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -79,69 +90,46 @@ fun ConsultationFormScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Formulario idéntico a la imagen
-            MedicalFormField(
-                label = "Motivo de la consulta",
-                value = reason,
-                onValueChange = { reason = it },
-                placeholder = "Selecciona o escribe el motivo",
-                trailingIcon = Icons.Outlined.KeyboardArrowDown
-            )
-
+            MedicalFormField("Motivo de la consulta", reason, { reason = it }, "Ej: Control anual", PrimaryPink)
             Spacer(modifier = Modifier.height(20.dp))
-
-            MedicalFormField(
-                label = "Veterinario",
-                value = vet,
-                onValueChange = { vet = it },
-                placeholder = "Nombre del veterinario"
-            )
-
+            MedicalFormField("Veterinario", vet, { vet = it }, "Nombre del veterinario", PrimaryPink)
             Spacer(modifier = Modifier.height(20.dp))
-
-            MedicalFormField(
-                label = "Diagnóstico",
-                value = diagnosis,
-                onValueChange = { diagnosis = it },
-                placeholder = "Escribe el diagnóstico"
-            )
-
+            MedicalFormField("Diagnóstico", diagnosis, { diagnosis = it }, "Resultado de la revisión", PrimaryPink)
             Spacer(modifier = Modifier.height(20.dp))
-
-            MedicalFormField(
-                label = "Tratamiento / Indicaciones",
-                value = treatment,
-                onValueChange = { treatment = it },
-                placeholder = "Escribe el tratamiento indicado"
-            )
-
+            MedicalFormField("Tratamiento", treatment, { treatment = it }, "Medicamentos o pasos a seguir", PrimaryPink)
+            
             Spacer(modifier = Modifier.height(20.dp))
-
-            MedicalFormField(
-                label = "Fecha de la consulta",
-                value = date,
-                onValueChange = { date = it },
-                placeholder = "Selecciona la fecha",
-                trailingIcon = Icons.Outlined.CalendarMonth
-            )
-
+            Text("Fecha", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary, modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp))
+            PetCareDatePickerField(value = date, onValueChange = { date = it }, placeholder = "Seleccionar fecha")
+            
             Spacer(modifier = Modifier.height(20.dp))
-
-            MedicalFormField(
-                label = "Observaciones",
-                value = observations,
-                onValueChange = { observations = it },
-                placeholder = "Escribe observaciones (opcional)",
-                isSingleLine = false,
-                minLines = 4
-            )
+            MedicalFormField("Observaciones", observations, { observations = it }, "Notas adicionales", PrimaryPink, isSingleLine = false, minLines = 3)
 
             Spacer(modifier = Modifier.height(40.dp))
 
             PetCareButton(
-                text = if (isEdit) "Guardar cambios" else "Guardar consulta",
-                onClick = { },
-                containerColor = PrimaryPink
+                text = if (isEditing) "Actualizar consulta" else "Guardar consulta",
+                onClick = {
+                    if (reason.isNotBlank() && date.isNotBlank()) {
+                        val structuredDesc = "Dx: $diagnosis\nTratamiento: $treatment\nObs: $observations"
+                        val record = existingRecord?.copy(
+                            title = reason,
+                            veterinarian = vet.ifBlank { null },
+                            description = structuredDesc,
+                            date = date
+                        ) ?: MedicalRecordEntity(
+                            petId = petId,
+                            title = reason,
+                            veterinarian = vet.ifBlank { null },
+                            description = structuredDesc,
+                            recordType = "Consulta",
+                            date = date
+                        )
+                        onSave(record)
+                    }
+                },
+                containerColor = PrimaryPink,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -153,36 +141,25 @@ private fun MedicalFormField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    trailingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    accentColor: Color,
     isSingleLine: Boolean = true,
     minLines: Int = 1
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimary,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        Text(text = label, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary, modifier = Modifier.padding(bottom = 8.dp))
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(placeholder, color = TextSecondary, fontSize = 15.sp) },
-            trailingIcon = trailingIcon?.let {
-                { Icon(it, contentDescription = null, tint = TextSecondary) }
-            },
             singleLine = isSingleLine,
             minLines = minLines,
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = PrimaryPink,
+                focusedBorderColor = accentColor,
                 unfocusedBorderColor = Border,
                 focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
+                unfocusedContainerColor = Color.White
             )
         )
     }

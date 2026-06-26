@@ -7,12 +7,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,33 +17,48 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.petcare.app.components.PetCareButton
+import com.petcare.app.components.PetCareDatePickerField
+import com.petcare.app.data.local.entity.MedicalRecordEntity
 import com.petcare.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DewormingFormScreen(
-    isEdit: Boolean = false,
-    onBack: () -> Unit = {}
+    petId: Int,
+    existingRecord: MedicalRecordEntity? = null,
+    onBack: () -> Unit,
+    onSave: (MedicalRecordEntity) -> Unit
 ) {
+    val isEditing = existingRecord != null
     val dewormingColor = Color(0xFF4CAF50)
-    var type by remember { mutableStateOf("") }
-    var product by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }
-    var nextApp by remember { mutableStateOf("") }
-    var observations by remember { mutableStateOf("") }
+    
+    // Extraer tipo y producto del título ("Tipo - Producto")
+    val titleParts = existingRecord?.title?.split(" - ")
+    var type by remember { mutableStateOf(titleParts?.firstOrNull() ?: "") }
+    var product by remember { mutableStateOf(titleParts?.getOrNull(1) ?: "") }
+    var date by remember { mutableStateOf(existingRecord?.date ?: "") }
+    
+    // Extraer próxima aplicación de la descripción
+    val initialNextApp = existingRecord?.description?.split(". ")?.firstOrNull { it.startsWith("Próxima aplicación:") }?.removePrefix("Próxima aplicación: ") ?: ""
+    val initialObs = existingRecord?.description?.split(". ")?.lastOrNull { !it.startsWith("Próxima aplicación:") } ?: ""
+    
+    var nextApp by remember { mutableStateOf(initialNextApp) }
+    var observations by remember { mutableStateOf(if (isEditing) initialObs else "") }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(if (isEdit) "Editar desparasitación" else "Agregar desparasitación", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextPrimary) },
+                title = { 
+                    Text(
+                        text = if (isEditing) "Editar desparasitación" else "Nueva desparasitación", 
+                        fontWeight = FontWeight.Bold, 
+                        fontSize = 18.sp, 
+                        color = TextPrimary
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = null, tint = TextPrimary)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.Close, contentDescription = null, tint = TextPrimary)
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Atrás", tint = TextPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Background)
@@ -62,11 +74,10 @@ fun DewormingFormScreen(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Icono Central
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .background(Color(0xFFE8F5E9), RoundedCornerShape(24.dp)), // Verde muy suave
+                    .background(Color(0xFFE8F5E9), RoundedCornerShape(24.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -75,72 +86,47 @@ fun DewormingFormScreen(
                     tint = dewormingColor,
                     modifier = Modifier.size(50.dp)
                 )
-                // Pequeña huella superpuesta para dar el toque de la imagen
-                Icon(
-                    imageVector = Icons.Outlined.Pets,
-                    contentDescription = null,
-                    tint = dewormingColor,
-                    modifier = Modifier.size(20.dp).offset(y = 4.dp)
-                )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Formulario
-            MedicalFormField(
-                label = "Tipo de desparasitación",
-                value = type,
-                onValueChange = { type = it },
-                placeholder = "Selecciona el tipo",
-                trailingIcon = Icons.Outlined.KeyboardArrowDown
-            )
-
+            MedicalFormField("Tipo (Interna / Externa)", type, { type = it }, "Ej. Interna", dewormingColor)
             Spacer(modifier = Modifier.height(20.dp))
-
-            MedicalFormField(
-                label = "Producto",
-                value = product,
-                onValueChange = { product = it },
-                placeholder = "Ej. Pastilla / Pipeta"
-            )
-
+            MedicalFormField("Producto", product, { product = it }, "Nombre del producto", dewormingColor)
+            
             Spacer(modifier = Modifier.height(20.dp))
-
-            MedicalFormField(
-                label = "Fecha de aplicación",
-                value = date,
-                onValueChange = { date = it },
-                placeholder = "Selecciona la fecha",
-                trailingIcon = Icons.Outlined.CalendarMonth
-            )
-
+            Text("Fecha de aplicación", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary, modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp))
+            PetCareDatePickerField(value = date, onValueChange = { date = it }, placeholder = "Seleccionar fecha")
+            
             Spacer(modifier = Modifier.height(20.dp))
-
-            MedicalFormField(
-                label = "Próxima aplicación",
-                value = nextApp,
-                onValueChange = { nextApp = it },
-                placeholder = "Selecciona la fecha",
-                trailingIcon = Icons.Outlined.CalendarMonth
-            )
-
+            Text("Próxima aplicación (Opcional)", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary, modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp))
+            PetCareDatePickerField(value = nextApp, onValueChange = { nextApp = it }, placeholder = "Seleccionar fecha")
+            
             Spacer(modifier = Modifier.height(20.dp))
-
-            MedicalFormField(
-                label = "Observaciones",
-                value = observations,
-                onValueChange = { observations = it },
-                placeholder = "Escribe observaciones (opcional)",
-                isSingleLine = false,
-                minLines = 4
-            )
+            MedicalFormField("Observaciones", observations, { observations = it }, "Notas adicionales", dewormingColor, isSingleLine = false, minLines = 4)
 
             Spacer(modifier = Modifier.height(40.dp))
 
             PetCareButton(
-                text = if (isEdit) "Guardar cambios" else "Guardar desparasitación",
-                onClick = { },
-                containerColor = dewormingColor
+                text = if (isEditing) "Actualizar registro" else "Guardar registro",
+                onClick = {
+                    if (type.isNotBlank() && date.isNotBlank()) {
+                        val record = existingRecord?.copy(
+                            title = "$type - $product",
+                            description = "Próxima aplicación: $nextApp. $observations",
+                            date = date
+                        ) ?: MedicalRecordEntity(
+                            petId = petId,
+                            title = "$type - $product",
+                            description = "Próxima aplicación: $nextApp. $observations",
+                            recordType = "Desparasitación",
+                            date = date
+                        )
+                        onSave(record)
+                    }
+                },
+                containerColor = dewormingColor,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -152,36 +138,25 @@ private fun MedicalFormField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    trailingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    accentColor: Color,
     isSingleLine: Boolean = true,
     minLines: Int = 1
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimary,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        Text(text = label, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary, modifier = Modifier.padding(bottom = 8.dp))
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(placeholder, color = TextSecondary, fontSize = 15.sp) },
-            trailingIcon = trailingIcon?.let {
-                { Icon(it, contentDescription = null, tint = TextSecondary) }
-            },
             singleLine = isSingleLine,
             minLines = minLines,
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF4CAF50),
+                focusedBorderColor = accentColor,
                 unfocusedBorderColor = Border,
                 focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
+                unfocusedContainerColor = Color.White
             )
         )
     }

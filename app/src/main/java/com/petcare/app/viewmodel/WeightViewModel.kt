@@ -19,13 +19,20 @@ class WeightViewModel(
     fun loadWeights(petId: Int) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-
             repository.getWeightsByPet(petId).collect { weights ->
                 _uiState.value = _uiState.value.copy(
                     weights = weights,
                     isLoading = false,
                     errorMessage = null
                 )
+            }
+        }
+    }
+
+    fun loadLastWeight(petId: Int) {
+        viewModelScope.launch {
+            repository.getLastWeightByPet(petId).collect { lastWeight ->
+                _uiState.value = _uiState.value.copy(lastWeight = lastWeight)
             }
         }
     }

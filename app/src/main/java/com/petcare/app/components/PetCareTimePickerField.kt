@@ -27,7 +27,16 @@ fun PetCareTimePickerField(
     placeholder: String = "Seleccionar hora"
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
-    val timePickerState = rememberTimePickerState(is24Hour = true)
+    
+    // Parseamos la hora actual si existe para que el picker abra en ese punto
+    val initialHour = remember(value) { value.split(":").firstOrNull()?.toIntOrNull() ?: 9 }
+    val initialMinute = remember(value) { value.split(":").lastOrNull()?.toIntOrNull() ?: 0 }
+    
+    val timePickerState = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = true
+    )
 
     if (showTimePicker) {
         AlertDialog(
@@ -72,7 +81,7 @@ fun PetCareTimePickerField(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { showTimePicker = true },
-        enabled = false, // Bloquea teclado
+        enabled = false, // Bloquea teclado para forzar el uso del picker
         shape = RoundedCornerShape(12.dp),
         trailingIcon = {
             Icon(

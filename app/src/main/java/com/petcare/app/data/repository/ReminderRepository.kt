@@ -19,8 +19,8 @@ class ReminderRepository(
         return reminderDao.getReminderById(reminderId)
     }
 
-    suspend fun insertReminder(reminder: ReminderEntity) {
-        reminderDao.insertReminder(reminder)
+    suspend fun insertReminder(reminder: ReminderEntity): Long {
+        return reminderDao.insertReminder(reminder)
     }
 
     suspend fun updateReminder(reminder: ReminderEntity) {

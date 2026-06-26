@@ -20,7 +20,7 @@ import com.petcare.app.data.local.entity.ReminderEntity
         WeightEntryEntity::class,
         ReminderEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class PetCareDatabase : RoomDatabase() {

@@ -9,37 +9,36 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.DirectionsRun
-import androidx.compose.material.icons.outlined.MedicalServices
-import androidx.compose.material.icons.outlined.Restaurant
+import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.outlined.Pets
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.petcare.app.R
-import com.petcare.app.components.PetCareBottomBar
+import com.petcare.app.data.remote.dto.AdviceDto
 import com.petcare.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdviceScreen(
-    onBackClick: () -> Unit = {},
-    onNavigate: (String) -> Unit = {}
+    adviceList: List<AdviceDto>,
+    dailyAdvice: AdviceDto? = null,
+    onBackClick: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = "Consejos y Curiosidades",
-                        fontSize = 22.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     )
@@ -53,16 +52,9 @@ fun AdviceScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Background
                 )
-            )
-        },
-        bottomBar = {
-            // Reemplazo de la barra antigua por el nuevo componente reutilizable
-            PetCareBottomBar(
-                currentRoute = "inicio", // O la ruta que corresponda a esta sección
-                onNavigate = onNavigate
             )
         },
         containerColor = Background
@@ -74,71 +66,101 @@ fun AdviceScreen(
             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            // Consejo Destacado (Daily Advice)
             item {
-                AdviceFeaturedCard()
+                AdviceFeaturedCard(dailyAdvice ?: adviceList.firstOrNull())
             }
 
-            items(getAdviceCategories()) { category ->
-                AdviceCategoryCard(category)
+            // Título de sección
+            item {
+                Text(
+                    text = "Explorar consejos",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
+            // Lista de consejos desde Firestore
+            if (adviceList.isEmpty()) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = PrimaryPurple)
+                    }
+                }
+            } else {
+                items(adviceList) { advice ->
+                    AdviceItemCard(advice)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun AdviceFeaturedCard() {
+private fun AdviceFeaturedCard(advice: AdviceDto?) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp),
+            .height(210.dp),
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFEBE9FF)
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFEBE9FF)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(start = 24.dp, top = 20.dp, bottom = 20.dp, end = 0.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    modifier = Modifier.weight(1.2f)
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 24.dp, top = 20.dp, bottom = 20.dp, end = 0.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1.3f)) {
+                Surface(
+                    color = PrimaryPurple,
+                    shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = "¿Sabías que?",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Los perros tienen alrededor de 300 millones de receptores olfativos.",
-                        fontSize = 15.sp,
-                        color = TextPrimary,
-                        lineHeight = 22.sp,
-                        fontWeight = FontWeight.Medium
+                        text = "TIP DEL DÍA",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-
-                Image(
-                    painter = painterResource(id = R.drawable.pet_advice),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    contentScale = ContentScale.Fit,
-                    alignment = Alignment.BottomEnd
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = advice?.title ?: "¿Sabías que?",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                    maxLines = 1
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = advice?.description ?: "Cargando el mejor consejo para tu mascota...",
+                    fontSize = 14.sp,
+                    color = TextPrimary,
+                    lineHeight = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 4
                 )
             }
+
+            Image(
+                painter = painterResource(id = R.drawable.pet_advice),
+                contentDescription = null,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                contentScale = ContentScale.Fit,
+                alignment = Alignment.BottomEnd
+            )
         }
     }
 }
 
 @Composable
-private fun AdviceCategoryCard(category: AdviceCategory) {
+private fun AdviceItemCard(advice: AdviceDto) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -151,67 +173,36 @@ private fun AdviceCategoryCard(category: AdviceCategory) {
         ) {
             Box(
                 modifier = Modifier
-                    .size(60.dp)
-                    .background(category.iconBackgroundColor, CircleShape),
+                    .size(50.dp)
+                    .background(Color(0xFFF3F2FF), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = category.icon,
+                    imageVector = if (advice.category == "Salud") Icons.Outlined.Pets else Icons.Outlined.Lightbulb,
                     contentDescription = null,
-                    tint = category.iconTintColor,
-                    modifier = Modifier.size(30.dp)
+                    tint = PrimaryPurple,
+                    modifier = Modifier.size(26.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(20.dp))
+            Spacer(modifier = Modifier.width(16.dp))
 
             Column {
                 Text(
-                    text = category.title,
-                    fontSize = 17.sp,
+                    text = advice.title,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = category.description,
-                    fontSize = 14.sp,
+                    text = advice.description,
+                    fontSize = 13.sp,
                     color = TextSecondary,
-                    fontWeight = FontWeight.Medium
+                    lineHeight = 18.sp,
+                    maxLines = 2
                 )
             }
         }
     }
 }
-
-private data class AdviceCategory(
-    val title: String,
-    val description: String,
-    val icon: ImageVector,
-    val iconBackgroundColor: Color,
-    val iconTintColor: Color
-)
-
-private fun getAdviceCategories(): List<AdviceCategory> = listOf(
-    AdviceCategory(
-        title = "Consejos de Salud",
-        description = "Cuida la salud de tu mascota",
-        icon = Icons.Outlined.MedicalServices,
-        iconBackgroundColor = Color(0xFFE1F5FE),
-        iconTintColor = Color(0xFF039BE5)
-    ),
-    AdviceCategory(
-        title = "Alimentación",
-        description = "Mejores alimentos para ellos",
-        icon = Icons.Outlined.Restaurant,
-        iconBackgroundColor = Color(0xFFFFF3E0),
-        iconTintColor = Color(0xFFF57C00)
-    ),
-    AdviceCategory(
-        title = "Ejercicio y Diversión",
-        description = "Actividades para mantenerlos felices",
-        icon = Icons.AutoMirrored.Outlined.DirectionsRun,
-        iconBackgroundColor = Color(0xFFE8F5E9),
-        iconTintColor = Color(0xFF388E3C)
-    )
-)

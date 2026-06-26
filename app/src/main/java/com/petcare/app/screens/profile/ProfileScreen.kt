@@ -13,15 +13,13 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,22 +27,35 @@ import com.petcare.app.components.PetCareButton
 import com.petcare.app.components.PetCareImagePicker
 import com.petcare.app.screens.pets.BottomNavigationBar
 import com.petcare.app.ui.theme.*
+import com.petcare.app.utils.FileHelper
 
 @Composable
 fun ProfileScreen(
+    userName: String = "Usuario",
+    userEmail: String = "",
+    petCount: Int = 0,
+    reminderCount: Int = 0,
+    medicalCount: Int = 0,
     userPhotoUrl: String? = null,
-    onPhotoSelected: (Uri?) -> Unit = {}, // Nuevo callback para cuando el usuario elija una foto
-    onOptionClick: (String) -> Unit = {},
-    onLogoutClick: () -> Unit = {}
+    onPhotoSelected: (String) -> Unit = {},
+    onLogoutClick: () -> Unit = {},
+    onHomeClick: () -> Unit = {},
+    onPetsClick: () -> Unit = {},
+    onRemindersClick: () -> Unit = {}
 ) {
-    // Estado local para manejar la previsualización de la foto seleccionada
+    val context = LocalContext.current
     var currentPhotoUri by remember {
-        mutableStateOf<Uri?>(userPhotoUrl?.let { Uri.parse(it) })
+        mutableStateOf(userPhotoUrl?.let { Uri.parse(it) })
     }
 
     Scaffold(
         bottomBar = {
-            BottomNavigationBar()
+            BottomNavigationBar(
+                onHomeClick = onHomeClick,
+                onPetsClick = onPetsClick,
+                onRemindersClick = onRemindersClick,
+                onProfileClick = { /* Ya estamos aquí */ }
+            )
         },
         containerColor = Background
     ) { paddingValues ->
@@ -54,7 +65,6 @@ fun ProfileScreen(
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
-            // --- CABECERA ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -78,35 +88,38 @@ fun ProfileScreen(
                         .padding(horizontal = 24.dp, vertical = 40.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
-                    // --- CAMBIO AQUÍ: Usamos PetCareImagePicker ---
+                    // COMPONENTE FOTOS: Persistencia local
                     PetCareImagePicker(
                         imageUri = currentPhotoUri,
                         onImageSelected = { uri ->
-                            currentPhotoUri = uri
-                            onPhotoSelected(uri) // Avisamos al exterior que cambió la foto
+                            uri?.let {
+                                val localPath = FileHelper.saveImageToInternalStorage(context, it)
+                                if (localPath != null) {
+                                    currentPhotoUri = Uri.parse(localPath)
+                                    onPhotoSelected(localPath)
+                                }
+                            }
                         },
-                        size = 85.dp // Mantenemos el tamaño del diseño original
+                        size = 85.dp
                     )
 
                     Spacer(modifier = Modifier.width(20.dp))
 
                     Column {
                         Text(
-                            text = "Adriana",
-                            fontSize = 26.sp,
+                            text = userName,
+                            fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                         Text(
-                            text = "adriano@email.com",
-                            fontSize = 15.sp,
+                            text = userEmail,
+                            fontSize = 14.sp,
                             color = Color.White.copy(alpha = 0.9f)
                         )
                     }
                 }
 
-                // --- TARJETA ESTADÍSTICAS ---
                 Card(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -121,18 +134,17 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxSize(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        StatItem(modifier = Modifier.weight(1f), count = "3", label = "Mascotas")
+                        StatItem(modifier = Modifier.weight(1f), count = petCount.toString(), label = "Mascotas")
                         VerticalDivider(modifier = Modifier.height(40.dp), color = Border.copy(alpha = 0.5f))
-                        StatItem(modifier = Modifier.weight(1f), count = "12", label = "Recordatorios")
+                        StatItem(modifier = Modifier.weight(1f), count = reminderCount.toString(), label = "Recordatorios")
                         VerticalDivider(modifier = Modifier.height(40.dp), color = Border.copy(alpha = 0.5f))
-                        StatItem(modifier = Modifier.weight(1f), count = "8", label = "Consultas")
+                        StatItem(modifier = Modifier.weight(1f), count = medicalCount.toString(), label = "Consultas")
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- LISTA DE OPCIONES ---
             Card(
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
@@ -142,28 +154,27 @@ fun ProfileScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    ProfileOptionItem(Icons.Outlined.Person, "Información personal") { onOptionClick("info") }
+                    ProfileOptionItem(Icons.Outlined.Person, "Información personal") { }
                     HorizontalDivider(Modifier.padding(horizontal = 20.dp), color = Border.copy(alpha = 0.3f))
 
-                    ProfileOptionItem(Icons.Outlined.Notifications, "Notificaciones") { onOptionClick("notif") }
+                    ProfileOptionItem(Icons.Outlined.Notifications, "Notificaciones") { }
                     HorizontalDivider(Modifier.padding(horizontal = 20.dp), color = Border.copy(alpha = 0.3f))
 
-                    ProfileOptionItem(Icons.AutoMirrored.Outlined.HelpOutline, "Ayuda y soporte") { onOptionClick("help") }
+                    ProfileOptionItem(Icons.AutoMirrored.Outlined.HelpOutline, "Ayuda y soporte") { }
                     HorizontalDivider(Modifier.padding(horizontal = 20.dp), color = Border.copy(alpha = 0.3f))
 
-                    ProfileOptionItem(Icons.Outlined.Info, "Acerca de PetCare") { onOptionClick("about") }
+                    ProfileOptionItem(Icons.Outlined.Info, "Acerca de PetCare") { }
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- BOTÓN CERRAR SESIÓN ---
             Box(modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)) {
                 PetCareButton(
                     text = "Cerrar sesión",
                     onClick = onLogoutClick,
-                    containerColor = PrimaryPurple
+                    containerColor = PrimaryPurple,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }

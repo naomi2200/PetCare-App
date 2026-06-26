@@ -26,5 +26,6 @@ data class ReminderEntity(
     val reminderType: String,
     val reminderDate: String,
     val reminderTime: String? = null,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val anticipationMinutes: Int = 0
 )

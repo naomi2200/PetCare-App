@@ -6,6 +6,7 @@ import com.petcare.app.data.repository.PetRepository
 import com.petcare.app.data.repository.MedicalRepository
 import com.petcare.app.data.repository.WeightRepository
 import com.petcare.app.data.repository.ReminderRepository
+import com.petcare.app.utils.NotificationHelper
 
 class PetCareApplication : Application() {
 
@@ -27,5 +28,11 @@ class PetCareApplication : Application() {
 
     val reminderRepository by lazy {
         ReminderRepository(database.reminderDao())
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        // Inicializamos el canal de notificaciones al arrancar la app
+        NotificationHelper.createNotificationChannel(this)
     }
 }

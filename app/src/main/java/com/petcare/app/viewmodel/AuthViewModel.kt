@@ -16,24 +16,36 @@ class AuthViewModel(
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
-    fun register(name: String, email: String, password: String) {
+    fun loadUserProfile() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            val profile = repository.getUserProfile()
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                userProfile = profile
+            )
+        }
+    }
+
+    fun register(name: String, email: String, password: String, photoUrl: String? = null) {
         val error = validateRegister(name, email, password)
         if (error != null) {
-            _uiState.value = AuthUiState(errorMessage = error)
+            _uiState.value = _uiState.value.copy(errorMessage = error)
             return
         }
 
         viewModelScope.launch {
-            _uiState.value = AuthUiState(isLoading = true)
+            _uiState.value = _uiState.value.copy(isLoading = true)
             try {
                 repository.register(
                     name = name.trim(),
                     email = email.trim(),
-                    password = password
+                    password = password,
+                    photoUrl = photoUrl
                 )
-                _uiState.value = AuthUiState(isSuccess = true)
+                _uiState.value = _uiState.value.copy(isSuccess = true, isLoading = false)
             } catch (e: Exception) {
-                _uiState.value = AuthUiState(errorMessage = getFriendlyError(e.message))
+                _uiState.value = _uiState.value.copy(errorMessage = getFriendlyError(e.message), isLoading = false)
             }
         }
     }
@@ -41,20 +53,20 @@ class AuthViewModel(
     fun login(email: String, password: String) {
         val error = validateLogin(email, password)
         if (error != null) {
-            _uiState.value = AuthUiState(errorMessage = error)
+            _uiState.value = _uiState.value.copy(errorMessage = error)
             return
         }
 
         viewModelScope.launch {
-            _uiState.value = AuthUiState(isLoading = true)
+            _uiState.value = _uiState.value.copy(isLoading = true)
             try {
                 repository.login(
                     email = email.trim(),
                     password = password
                 )
-                _uiState.value = AuthUiState(isSuccess = true)
+                _uiState.value = _uiState.value.copy(isSuccess = true, isLoading = false)
             } catch (e: Exception) {
-                _uiState.value = AuthUiState(errorMessage = getFriendlyError(e.message))
+                _uiState.value = _uiState.value.copy(errorMessage = getFriendlyError(e.message), isLoading = false)
             }
         }
     }

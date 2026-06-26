@@ -1,14 +1,14 @@
 package com.petcare.app.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -23,17 +23,33 @@ import java.util.*
 fun PetCareDatePickerField(
     value: String,
     onValueChange: (String) -> Unit,
+    label: String = "",
     placeholder: String = "Seleccionar fecha"
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
+    
+    // Configuramos el formateador para que trabaje SIEMPRE en UTC
+    // Esto evita que el desfase horario cambie el día seleccionado.
+    val formatter = remember { 
+        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+    }
 
-    // Estado del DatePicker (Material 3)
-    val datePickerState = rememberDatePickerState()
+    val initialDateMillis = remember(value) {
+        try {
+            if (value.isNotEmpty()) {
+                formatter.parse(value)?.time
+            } else null
+        } catch (e: Exception) {
+            null
+        }
+    }
 
-    // Formateador de fecha solicitado: dd/MM/yyyy
-    val formatter = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = initialDateMillis
+    )
 
-    // Diálogo del DatePicker
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -41,12 +57,9 @@ fun PetCareDatePickerField(
                 TextButton(
                     onClick = {
                         datePickerState.selectedDateMillis?.let { millis ->
-                            // Convertir milisegundos a fecha formateada
+                            // El DatePicker de Material 3 devuelve milisegundos en UTC (00:00:00)
                             val date = Date(millis)
-                            // Ajuste de zona horaria para evitar desfases de un día
-                            val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
-                            calendar.time = date
-                            onValueChange(formatter.format(calendar.time))
+                            onValueChange(formatter.format(date))
                         }
                         showDatePicker = false
                     }
@@ -71,30 +84,41 @@ fun PetCareDatePickerField(
         }
     }
 
-    // Campo de texto (Solo lectura)
-    OutlinedTextField(
-        value = value,
-        onValueChange = { },
-        readOnly = true,
-        placeholder = { Text(placeholder, color = TextSecondary, fontSize = 15.sp) },
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { showDatePicker = true },
-        enabled = false, // Evita que aparezca el teclado
-        shape = RoundedCornerShape(12.dp),
-        trailingIcon = {
-            Icon(
-                imageVector = Icons.Outlined.CalendarToday,
-                contentDescription = "Calendario",
-                tint = PrimaryPurple
+    Column {
+        if (label.isNotEmpty()) {
+            Text(
+                text = label,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                modifier = Modifier.padding(bottom = 8.dp)
             )
-        },
-        colors = OutlinedTextFieldDefaults.colors(
-            disabledTextColor = TextPrimary,
-            disabledBorderColor = Border,
-            disabledPlaceholderColor = TextSecondary,
-            disabledTrailingIconColor = PrimaryPurple,
-            disabledContainerColor = Color.Transparent
+        }
+        
+        OutlinedTextField(
+            value = value,
+            onValueChange = { },
+            readOnly = true,
+            placeholder = { Text(placeholder, color = TextSecondary, fontSize = 15.sp) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDatePicker = true },
+            enabled = false, // Evita que aparezca el teclado
+            shape = RoundedCornerShape(12.dp),
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.CalendarToday,
+                    contentDescription = "Calendario",
+                    tint = PrimaryPurple
+                )
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = TextPrimary,
+                disabledBorderColor = Border,
+                disabledPlaceholderColor = TextSecondary,
+                disabledTrailingIconColor = PrimaryPurple,
+                disabledContainerColor = Color.Transparent
+            )
         )
-    )
+    }
 }

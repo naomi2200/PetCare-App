@@ -1,5 +1,6 @@
 package com.petcare.app.screens.pets
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,8 +12,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.ChevronLeft
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,7 +27,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.petcare.app.R
+import com.petcare.app.components.PetCareConfirmDialog
 import com.petcare.app.data.local.entity.PetEntity
 import com.petcare.app.ui.theme.*
 
@@ -38,8 +43,9 @@ fun PetDetailScreen(
     onRemindersClick: () -> Unit = {},
     onDeleteClick: (PetEntity) -> Unit
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     Scaffold(
-        bottomBar = { BottomNavigationBar() },
         containerColor = Background
     ) { paddingValues ->
         if (pet == null) {
@@ -58,13 +64,25 @@ fun PetDetailScreen(
                 }
             }
         } else {
+            // Diálogo de confirmación
+            PetCareConfirmDialog(
+                show = showDeleteDialog,
+                title = "Eliminar mascota",
+                message = "¿Estás seguro de que deseas eliminar a ${pet.nombre}? Se borrarán todos sus registros médicos y recordatorios.",
+                onConfirm = {
+                    onDeleteClick(pet)
+                    showDeleteDialog = false
+                },
+                onDismiss = { showDeleteDialog = false }
+            )
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
             ) {
-                PetHeader(onBackClick, onEditClick)
+                PetHeader(pet = pet, onBackClick = onBackClick, onEditClick = onEditClick)
 
                 PetInfoCard(
                     pet = pet,
@@ -90,11 +108,15 @@ fun PetDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedButton(
-                    onClick = { onDeleteClick(pet) },
+                    onClick = { showDeleteDialog = true },
                     modifier = Modifier
                         .padding(horizontal = 24.dp)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
+                    border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.5f))
                 ) {
+                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
                     Text("Eliminar mascota")
                 }
 
@@ -105,7 +127,7 @@ fun PetDetailScreen(
 }
 
 @Composable
-fun PetHeader(onBackClick: () -> Unit, onEditClick: () -> Unit) {
+fun PetHeader(pet: PetEntity, onBackClick: () -> Unit, onEditClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -146,14 +168,26 @@ fun PetHeader(onBackClick: () -> Unit, onEditClick: () -> Unit) {
             }
         }
 
-        Image(
-            painter = painterResource(id = R.drawable.pet_login),
-            contentDescription = null,
-            modifier = Modifier
-                .size(200.dp)
-                .align(Alignment.Center),
-            contentScale = ContentScale.Fit
-        )
+        if (!pet.fotoUrl.isNullOrEmpty()) {
+            AsyncImage(
+                model = pet.fotoUrl,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(180.dp)
+                    .clip(CircleShape)
+                    .align(Alignment.Center),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Image(
+                painter = painterResource(id = R.drawable.pet_dashboard),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(180.dp)
+                    .align(Alignment.Center),
+                contentScale = ContentScale.Fit
+            )
+        }
     }
 }
 
@@ -172,14 +206,23 @@ fun PetInfoCard(
             modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.pet_login),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(65.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
+            if (!pet.fotoUrl.isNullOrEmpty()) {
+                AsyncImage(
+                    model = pet.fotoUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(65.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    modifier = Modifier.size(65.dp).background(PrimaryPurple.copy(alpha = 0.1f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Pets, null, tint = PrimaryPurple)
+                }
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 
